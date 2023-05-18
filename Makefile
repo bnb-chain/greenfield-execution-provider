@@ -22,4 +22,7 @@ else
 	go build $(BUILD_FLAGS) -o build/sender cmd/sender/main.go
 endif
 
+local_up:
+	bash +x ./deployment/local_up.sh
+
 .PHONY: build_executor build_observer build_sender
