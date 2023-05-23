@@ -12,6 +12,11 @@ const (
 )
 
 const (
+	ExecutionTaskEvent   = "greenfield.storage.EventExecutionTask"
+	ExecutionResultEvent = "greenfield.storage.EventExecutionResult"
+)
+
+const (
 	DBDialectMysql   = "mysql"
 	DBDialectSqlite3 = "sqlite3"
 )

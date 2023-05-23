@@ -30,6 +30,7 @@ type EventStatus int
 const (
 	EventStatusInit      EventStatus = 0
 	EventStatusConfirmed EventStatus = 1
+	EventStatusProcessed EventStatus = 2
 )
 
 type EventLog struct {
@@ -59,6 +60,7 @@ func (EventLog) TableName() string {
 
 func (l *EventLog) BeforeCreate() (err error) {
 	l.CreateTime = time.Now().Unix()
+	l.UpdateTime = time.Now().Unix()
 	return nil
 }
 
@@ -76,11 +78,11 @@ type ExecutionTask struct {
 	InvokeTxHash string
 	TaskId       int64
 
-	ExecutionObjectId int64
+	ExecutionObjectId string
 	ExecutionUri      string
 
 	InputFiles   string // split by ","
-	MaxGas       int64
+	MaxGas       string
 	InvokeMethod string
 	Params       string // hex encoded
 
@@ -97,6 +99,12 @@ type ExecutionTask struct {
 
 func (ExecutionTask) TableName() string {
 	return "execution_task"
+}
+
+func (l *ExecutionTask) BeforeCreate() (err error) {
+	l.CreateTime = time.Now().Unix()
+	l.UpdateTime = time.Now().Unix()
+	return nil
 }
 
 func InitTables(db *gorm.DB) {

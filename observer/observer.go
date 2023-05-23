@@ -29,6 +29,7 @@ func NewObserver(db *gorm.DB, cfg *util.ObserverConfig, client *client.Greenfiel
 // Start starts the routines of observer
 func (ob *Observer) Start() {
 	go ob.Fetch(ob.Config.GreenfieldConfig.StartHeight)
+	go ob.ProcessConfirmedEvent()
 	go ob.PruneBlocks()
 	go ob.Alert()
 }
@@ -149,6 +150,73 @@ func (ob *Observer) PruneBlocks() {
 			util.Logger.Infof("prune block logs error, err=%s", err.Error())
 		}
 	}
+}
+
+func (ob *Observer) ProcessConfirmedEvent() {
+	go ob.processConfirmedEvent(common.ExecutionTaskEvent)
+	go ob.processConfirmedEvent(common.ExecutionResultEvent)
+}
+
+func (ob *Observer) processConfirmedEvent(eventType string) {
+	for {
+		time.Sleep(common.ObserverFetchInterval)
+
+		eventLog := model.EventLog{}
+		err := ob.DB.Where("status = ? and event_name = ?", model.EventStatusConfirmed, eventType).Order("task_id asc").Take(&eventLog).Error
+		if err != nil {
+			continue
+		}
+
+		switch eventType {
+		case common.ExecutionTaskEvent:
+			err := ob.processExecutionTask(eventLog)
+			if err != nil {
+				util.Logger.Errorf("process execution task error, err=%s", err.Error())
+				continue
+			}
+		}
+	}
+}
+
+func (ob *Observer) processExecutionTask(eventLog model.EventLog) error {
+	taskModel := &model.ExecutionTask{
+		InvokeTxHash:      eventLog.TxHash,
+		TaskId:            eventLog.TaskId,
+		ExecutionObjectId: eventLog.ExecutableObjectId,
+		ExecutionUri:      "", // todo
+		InputFiles:        eventLog.InputObjectIds,
+		MaxGas:            eventLog.MaxGas,
+		InvokeMethod:      eventLog.Method,
+		Params:            eventLog.Params,
+	}
+
+	tx := ob.DB.Begin()
+	if err := tx.Error; err != nil {
+		util.Logger.Errorf("start transaction error, err=%s", err.Error())
+		return err
+	}
+
+	err := tx.Model(&eventLog).Updates(
+		map[string]interface{}{
+			"status":      model.EventStatusProcessed,
+			"update_time": time.Now().Unix(),
+		}).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Create(taskModel).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		util.Logger.Errorf("commit transaction error, err=%s", err.Error())
+		return err
+	}
+	return nil
 }
 
 // SaveBlockAndEvents saves block and packages to database

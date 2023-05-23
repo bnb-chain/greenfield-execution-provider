@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"strconv"
 	"strings"
@@ -12,11 +13,6 @@ import (
 	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	sdktypes "github.com/bnb-chain/greenfield-go-sdk/types"
 	"github.com/bnb-chain/greenfield/sdk/client"
-)
-
-const (
-	ExecutionTaskEvent   = "greenfield.storage.EventExecutionTask"
-	ExecutionResultEvent = "greenfield.storage.EventExecutionResult"
 )
 
 type GreenfieldClient struct {
@@ -69,9 +65,9 @@ func (c *GreenfieldClient) GetBlockAndEventsAtHeight(height int64) (*common.Bloc
 	for idx, tx := range blockResults.TxsResults {
 		for _, event := range tx.Events {
 			switch event.Type {
-			case ExecutionTaskEvent:
+			case common.ExecutionTaskEvent:
 				eventLog := &model.EventLog{
-					EventName: ExecutionResultEvent,
+					EventName: common.ExecutionTaskEvent,
 					BlockHash: result.BlockHash,
 					TxHash:    strings.ToUpper(hex.EncodeToString(block.Block.Txs[idx].Hash())),
 					Height:    result.Height,
@@ -117,14 +113,18 @@ func (c *GreenfieldClient) GetBlockAndEventsAtHeight(height int64) (*common.Bloc
 						if err != nil {
 							return nil, err
 						}
-						eventLog.Params = params
+						bts, err := base64.StdEncoding.DecodeString(params)
+						if err != nil {
+							return nil, err
+						}
+						eventLog.Params = hex.EncodeToString(bts)
 					}
 				}
 
 				result.Events = append(result.Events, eventLog)
-			case ExecutionResultEvent:
+			case common.ExecutionResultEvent:
 				eventLog := &model.EventLog{
-					EventName: ExecutionResultEvent,
+					EventName: common.ExecutionResultEvent,
 					BlockHash: result.BlockHash,
 					TxHash:    strings.ToUpper(hex.EncodeToString(block.Block.Txs[idx].Hash())),
 					Height:    result.Height,
