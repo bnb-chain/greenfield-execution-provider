@@ -25,6 +25,43 @@ func (l *BlockLog) BeforeCreate() (err error) {
 	return nil
 }
 
+type EventStatus int
+
+const (
+	EventStatusInit      EventStatus = 0
+	EventStatusConfirmed EventStatus = 1
+)
+
+type EventLog struct {
+	Id        int64
+	EventName string
+
+	TaskId             int64
+	Operator           string
+	ExecutableObjectId string
+	InputObjectIds     string
+	MaxGas             string
+	Method             string
+	Params             string
+
+	Status       EventStatus
+	BlockHash    string
+	TxHash       string
+	Height       int64
+	ConfirmedNum int64
+	CreateTime   int64
+	UpdateTime   int64
+}
+
+func (EventLog) TableName() string {
+	return "event_log"
+}
+
+func (l *EventLog) BeforeCreate() (err error) {
+	l.CreateTime = time.Now().Unix()
+	return nil
+}
+
 type ExecutionTaskStatus int
 
 const (
@@ -67,6 +104,10 @@ func InitTables(db *gorm.DB) {
 		db.CreateTable(&BlockLog{})
 		db.Model(&BlockLog{}).AddUniqueIndex("idx_block_log_height", "height")
 		db.Model(&BlockLog{}).AddIndex("idx_block_log_create_time", "create_time")
+	}
+
+	if !db.HasTable(&EventLog{}) {
+		db.CreateTable(&EventLog{})
 	}
 
 	if !db.HasTable(&ExecutionTask{}) {

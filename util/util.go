@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/PagerDuty/go-pagerduty"
 )
@@ -28,12 +29,8 @@ type Alerter struct {
 
 func InitAlert(cfg *AlertConfig) {
 	alerter = Alerter{
-		BotId:    cfg.TelegramBotId,
-		ChatId:   cfg.TelegramChatId,
 		SlackApp: cfg.SlackApp,
 	}
-
-	pagerDutyAuthToken = cfg.PagerDutyAuthToken
 }
 
 // SendTelegramMessage sends message to telegram group
@@ -121,4 +118,17 @@ func SendPagerDutyAlert(detail string, dedupKey string) {
 	if err != nil {
 		Logger.Errorf("send pager duty alert error, err=%s", err.Error())
 	}
+}
+
+// QuotedStrToIntWithBitSize convert a QuoteStr ""6""  to int 6
+func QuotedStrToIntWithBitSize(str string, bitSize int) (int64, error) {
+	s, err := strconv.Unquote(str)
+	if err != nil {
+		return 0, err
+	}
+	num, err := strconv.ParseInt(s, 10, bitSize)
+	if err != nil {
+		return 0, err
+	}
+	return num, nil
 }

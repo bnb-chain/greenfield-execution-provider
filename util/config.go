@@ -3,18 +3,19 @@ package util
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/binance-chain/greenfield-execution-provider/common"
 )
 
-type Config struct {
-	DBConfig    *DBConfig    `json:"db_config"`
-	LogConfig   *LogConfig   `json:"log_config"`
-	AlertConfig *AlertConfig `json:"alert_config"`
+type ObserverConfig struct {
+	DBConfig         *DBConfig        `json:"db_config"`
+	GreenfieldConfig GreenfieldConfig `json:"greenfield_config"`
+	LogConfig        *LogConfig       `json:"log_config"`
+	AlertConfig      *AlertConfig     `json:"alert_config"`
 }
 
-func (cfg *Config) Validate() {
+func (cfg *ObserverConfig) Validate() {
 	cfg.DBConfig.Validate()
 	cfg.LogConfig.Validate()
 	cfg.AlertConfig.Validate()
@@ -24,6 +25,8 @@ type AlertConfig struct {
 	Moniker string `json:"moniker"`
 
 	SlackApp string `json:"slack_app"`
+
+	BlockUpdateTimeout int64 `json:"block_update_timeout"`
 }
 
 func (cfg *AlertConfig) Validate() {
@@ -71,24 +74,25 @@ func (cfg *LogConfig) Validate() {
 	}
 }
 
-// ParseConfigFromFile returns the config from json file
-func ParseConfigFromFile(filePath string) *Config {
-	bz, err := ioutil.ReadFile(filePath)
+type GreenfieldConfig struct {
+	RPCAddr       string `json:"rpc_addr"`
+	PrivateKey    string `json:"private_key"`
+	ChainId       uint64 `json:"chain_id"`
+	StartHeight   int64  `json:"start_height"`
+	GasLimit      uint64 `json:"gas_limit"`
+	FeeAmount     uint64 `json:"fee_amount"`
+	ChainIdString string `json:"chain_id_string"`
+}
+
+// ParseObserverConfigFromFile returns the config from json file
+func ParseObserverConfigFromFile(filePath string) *ObserverConfig {
+	bz, err := os.ReadFile(filePath)
 	if err != nil {
 		panic(err)
 	}
 
-	var config Config
+	var config ObserverConfig
 	if err := json.Unmarshal(bz, &config); err != nil {
-		panic(err)
-	}
-	return &config
-}
-
-// ParseConfigFromJson returns the config from json string
-func ParseConfigFromJson(content string) *Config {
-	var config Config
-	if err := json.Unmarshal([]byte(content), &config); err != nil {
 		panic(err)
 	}
 	return &config

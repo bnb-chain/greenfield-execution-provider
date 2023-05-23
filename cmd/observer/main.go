@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/binance-chain/greenfield-execution-provider/client"
 	"github.com/binance-chain/greenfield-execution-provider/model"
+	"github.com/binance-chain/greenfield-execution-provider/observer"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -36,14 +38,14 @@ func printUsage() {
 func main() {
 	initFlags()
 
-	var config *util.Config
+	var config *util.ObserverConfig
 
 	configFilePath := viper.GetString(flagConfigPath)
 	if configFilePath == "" {
 		printUsage()
 		return
 	}
-	config = util.ParseConfigFromFile(configFilePath)
+	config = util.ParseObserverConfigFromFile(configFilePath)
 	config.Validate()
 
 	// init logger
@@ -56,6 +58,12 @@ func main() {
 	}
 	defer db.Close()
 	model.InitTables(db)
+
+	greenfieldClient := client.NewGreenFieldClient(&config.GreenfieldConfig)
+
+	observer := observer.NewObserver(db, config, greenfieldClient)
+
+	observer.Start()
 
 	select {}
 }

@@ -36,14 +36,14 @@ func printUsage() {
 func main() {
 	initFlags()
 
-	var config *util.Config
+	var config *util.ObserverConfig
 
 	configFilePath := viper.GetString(flagConfigPath)
 	if configFilePath == "" {
 		printUsage()
 		return
 	}
-	config = util.ParseConfigFromFile(configFilePath)
+	config = util.ParseObserverConfigFromFile(configFilePath)
 	config.Validate()
 
 	// init logger
