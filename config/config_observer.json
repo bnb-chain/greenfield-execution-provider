@@ -1,0 +1,30 @@
+{
+  "db_config": {
+    "dialect": "sqlite3",
+    "db_path": "./greenfield.db"
+  },
+  "greenfield_config": {
+    "private_key": "",
+    "bls_private_key": "",
+    "rpc_addr": "http://127.0.0.1:26750",
+    "chain_id": 1,
+    "start_height": 1,
+    "gas_limit": 30000,
+    "fee_amount": 150000000000000,
+    "chain_id_string": "greenfield_9000-121"
+  },
+  "log_config": {
+    "level": "INFO",
+    "filename": "",
+    "max_file_size_in_mb": 0,
+    "max_backups_of_log_files": 0,
+    "max_age_to_retain_log_files_in_days": 0,
+    "use_console_logger": true,
+    "use_file_logger": false,
+    "compress": false
+  },
+  "alert_config": {
+    "moniker": "moniker",
+    "block_update_time_out": 60
+  }
+}
