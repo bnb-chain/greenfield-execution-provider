@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/binance-chain/greenfield-execution-provider/common"
+	"github.com/bnb-chain/greenfield-execution-provider/common"
 )
 
 type ObserverConfig struct {

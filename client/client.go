@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/binance-chain/greenfield-execution-provider/common"
-	"github.com/binance-chain/greenfield-execution-provider/model"
-	"github.com/binance-chain/greenfield-execution-provider/util"
+	"github.com/bnb-chain/greenfield-execution-provider/common"
+	"github.com/bnb-chain/greenfield-execution-provider/model"
+	"github.com/bnb-chain/greenfield-execution-provider/util"
 	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	sdktypes "github.com/bnb-chain/greenfield-go-sdk/types"
 	"github.com/bnb-chain/greenfield/sdk/client"

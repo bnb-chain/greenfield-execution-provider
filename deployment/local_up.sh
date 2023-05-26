@@ -9,15 +9,15 @@ rm -rf ${workspace}/.local
 mkdir -p ${workspace}/.local
 
 # build greenfield
-git clone https://github.com/bnb-chain/greenfield.git ${workspace}/.local/greenfield
+git clone https://github.com/yutianwu/greenfield.git ${workspace}/.local/greenfield
 cd ${workspace}/.local/greenfield
-git checkout develop
+git checkout executable
 make build
 
 # build greenfield-storage-provider
 git clone https://github.com/bnb-chain/greenfield-storage-provider.git ${workspace}/.local/greenfield-storage-provider
 cd ${workspace}/.local/greenfield-storage-provider
-git checkout v0.2.0
+git checkout v0.2.1-test-3
 make install-tools
 make build
 

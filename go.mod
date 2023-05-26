@@ -1,14 +1,16 @@
-module github.com/binance-chain/greenfield-execution-provider
+module github.com/bnb-chain/greenfield-execution-provider
 
 go 1.20
 
 require (
 	github.com/PagerDuty/go-pagerduty v1.3.0
-	github.com/bnb-chain/greenfield-go-sdk v0.0.10-0.20230522061931-bd8b884f5261
+	github.com/bnb-chain/greenfield v0.2.0
+	github.com/bnb-chain/greenfield-go-sdk v0.0.10-0.20230525065729-d9a6e2321190
 	github.com/jinzhu/gorm v1.9.12
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
+	github.com/stretchr/testify v1.8.2
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
 
@@ -25,7 +27,6 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816 // indirect
-	github.com/bnb-chain/greenfield v0.2.0 // indirect
 	github.com/bnb-chain/greenfield-common/go v0.0.0-20230512062756-5d7790d0ccbf // indirect
 	github.com/btcsuite/btcd v0.23.3 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
@@ -116,7 +117,6 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/stretchr/testify v1.8.2 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/supranational/blst v0.3.8-0.20220526154634-513d2456b344 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
