@@ -4,13 +4,16 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/bnb-chain/greenfield-execution-provider/model"
+	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
+	sdktypes "github.com/bnb-chain/greenfield-go-sdk/types"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/bnb-chain/greenfield-execution-provider/model"
+	"github.com/bnb-chain/greenfield-execution-provider/sender"
 	"github.com/bnb-chain/greenfield-execution-provider/util"
 )
 
@@ -36,15 +39,14 @@ func printUsage() {
 func main() {
 	initFlags()
 
-	var config *util.ObserverConfig
+	var config *util.SenderConfig
 
 	configFilePath := viper.GetString(flagConfigPath)
 	if configFilePath == "" {
 		printUsage()
 		return
 	}
-	config = util.ParseObserverConfigFromFile(configFilePath)
-	config.Validate()
+	config = util.ParseSenderConfigFromFile(configFilePath)
 
 	// init logger
 	util.InitLogger(*config.LogConfig)
@@ -56,6 +58,19 @@ func main() {
 	}
 	defer db.Close()
 	model.InitTables(db)
+
+	account, err := sdktypes.NewAccountFromPrivateKey("sender", config.GreenfieldConfig.PrivateKey)
+	if err != nil {
+		panic(err)
+	}
+
+	sdkClient, err := sdkclient.New(config.GreenfieldConfig.ChainIdString, config.GreenfieldConfig.RPCAddr, sdkclient.Option{DefaultAccount: account})
+	if err != nil {
+		panic(err)
+	}
+
+	snder := sender.NewSender(db, sdkClient)
+	snder.Start()
 
 	select {}
 }

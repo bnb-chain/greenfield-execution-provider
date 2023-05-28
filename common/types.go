@@ -8,6 +8,8 @@ const (
 	ObserverAlertInterval  = 5 * time.Second
 	ObserverFetchInterval  = 2 * time.Second
 
+	SenderSendInterval = 1 * time.Second
+
 	DefaultConfirmNum int64 = 15
 )
 

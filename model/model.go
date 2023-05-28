@@ -91,6 +91,7 @@ type ExecutionTask struct {
 	ExecutionStatus int
 	ResultDataUri   string
 	LogDataUri      string
+	SubmitTxHash    string
 
 	Status     ExecutionTaskStatus
 	CreateTime int64

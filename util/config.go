@@ -21,6 +21,13 @@ func (cfg *ObserverConfig) Validate() {
 	cfg.AlertConfig.Validate()
 }
 
+type SenderConfig struct {
+	DBConfig         *DBConfig        `json:"db_config"`
+	GreenfieldConfig GreenfieldConfig `json:"greenfield_config"`
+	LogConfig        *LogConfig       `json:"log_config"`
+	AlertConfig      *AlertConfig     `json:"alert_config"`
+}
+
 type AlertConfig struct {
 	Moniker string `json:"moniker"`
 
@@ -92,6 +99,20 @@ func ParseObserverConfigFromFile(filePath string) *ObserverConfig {
 	}
 
 	var config ObserverConfig
+	if err := json.Unmarshal(bz, &config); err != nil {
+		panic(err)
+	}
+	return &config
+}
+
+// ParseSenderConfigFromFile returns the config from json file
+func ParseSenderConfigFromFile(filePath string) *SenderConfig {
+	bz, err := os.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	var config SenderConfig
 	if err := json.Unmarshal(bz, &config); err != nil {
 		panic(err)
 	}
