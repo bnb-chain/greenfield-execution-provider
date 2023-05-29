@@ -188,6 +188,7 @@ func (ob *Observer) processExecutionTask(eventLog model.EventLog) error {
 		MaxGas:            eventLog.MaxGas,
 		InvokeMethod:      eventLog.Method,
 		Params:            eventLog.Params,
+		Status:            model.ExecutionTaskStatusStatusInit,
 	}
 
 	tx := ob.DB.Begin()
