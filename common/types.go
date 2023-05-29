@@ -10,7 +10,8 @@ const (
 
 	SenderSendInterval = 1 * time.Second
 
-	DefaultConfirmNum int64 = 15
+	ExecutorFetchInterval       = 2 * time.Second
+	DefaultConfirmNum     int64 = 15
 )
 
 const (

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/bnb-chain/greenfield-execution-provider/executor"
 
 	"github.com/bnb-chain/greenfield-execution-provider/model"
 	"github.com/jinzhu/gorm"
@@ -56,6 +57,9 @@ func main() {
 	}
 	defer db.Close()
 	model.InitTables(db)
+
+	executor := executor.NewExecutor(db)
+	executor.Start()
 
 	select {}
 }
