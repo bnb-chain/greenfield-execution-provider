@@ -88,7 +88,7 @@ type ExecutionTask struct {
 
 	// results
 	GasUsed         int64
-	ExecutionStatus int
+	ExecutionStatus string
 	ResultDataUri   string
 	LogDataUri      string
 	SubmitTxHash    string

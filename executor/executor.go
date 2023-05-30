@@ -17,7 +17,7 @@ type Executor struct {
 
 type Receipt struct {
 	gasUsed    int64
-	returnCode int
+	returnCode string
 	resultUri  string
 	logUri     string
 }
@@ -26,7 +26,7 @@ type Receipt struct {
 func NewExecutor(db *gorm.DB) *Executor {
 	return &Executor{db, 0, Receipt{
 		gasUsed:    0,
-		returnCode: 0,
+		returnCode: "",
 		resultUri:  "",
 		logUri:     "",
 	}}
@@ -63,15 +63,30 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	args := []string{"./inputs/data.txt", "./outputs/result.txt"}
 	// 3. invoke iwasm - original design is to launch docker. here we directly start wasm runtime instead for PoC
 	cmd := exec.Command("./iwasm", args...)
+	stdout, err := cmd.StdoutPipe()
+	cmd.Stderr = cmd.Stdout
 	err = cmd.Run()
+
+	for {
+		tmp := make([]byte, 1024)
+		_, err := stdout.Read(tmp)
+		fmt.Print(string(tmp))
+		if err != nil {
+			break
+		}
+	}
+
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
-			ex.receipt.returnCode = exitError.ExitCode()
+			ex.receipt.returnCode = exitError.Error()
 			fmt.Printf("Command exited with return code: %d\n", ex.receipt.returnCode)
 		} else {
-			ex.receipt.returnCode = -1
-			fmt.Printf("Command exited wrongly!")
+			ex.receipt.returnCode = "Unknown error"
+			fmt.Printf("Command exited with unknown error!")
 		}
+	} else {
+		ex.receipt.returnCode = "Success"
+		fmt.Printf("Command exited successfully.")
 	}
 
 	// fixme! fake gas.
