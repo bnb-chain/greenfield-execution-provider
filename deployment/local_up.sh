@@ -12,12 +12,14 @@ mkdir -p ${workspace}/.local
 git clone https://github.com/yutianwu/greenfield.git ${workspace}/.local/greenfield
 cd ${workspace}/.local/greenfield
 git checkout executable
+go get github.com/ghodss/yaml
+make tools
 make build
 
 # build greenfield-storage-provider
 git clone https://github.com/bnb-chain/greenfield-storage-provider.git ${workspace}/.local/greenfield-storage-provider
 cd ${workspace}/.local/greenfield-storage-provider
-git checkout v0.2.1-test-3
+git checkout fix-signer
 make install-tools
 make build
 

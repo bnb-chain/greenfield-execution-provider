@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/bnb-chain/greenfield-execution-provider/e2e/basesuite"
 	"github.com/bnb-chain/greenfield-go-sdk/pkg/utils"
 	"github.com/bnb-chain/greenfield-go-sdk/types"
 	types2 "github.com/bnb-chain/greenfield/sdk/types"
@@ -17,6 +16,8 @@ import (
 	spTypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storageTypes "github.com/bnb-chain/greenfield/x/storage/types"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/bnb-chain/greenfield-execution-provider/e2e/basesuite"
 )
 
 type StorageTestSuite struct {
@@ -44,8 +45,12 @@ func (s *StorageTestSuite) Test_Object() {
 	bucketName := storageTestUtil.GenRandomBucketName()
 	objectName := storageTestUtil.GenRandomObjectName()
 
+	s.T().Log("---> Create Bucket <---")
+
 	bucketTx, err := s.Client.CreateBucket(s.ClientContext, bucketName, s.PrimarySP.OperatorAddress, types.CreateBucketOptions{})
 	s.Require().NoError(err)
+
+	s.T().Log("---> Create Bucket tx <---", "tx", bucketTx)
 
 	_, err = s.Client.WaitForTx(s.ClientContext, bucketTx)
 	s.Require().NoError(err)

@@ -163,8 +163,8 @@ github.com/bnb-chain/greenfield-cosmos-sdk/api v0.0.0-20230425074444-eb5869b05fe
 github.com/bnb-chain/greenfield-cosmos-sdk/api v0.0.0-20230425074444-eb5869b05fe9/go.mod h1:rbc4o84RSEvhf09o2+4Qiazsv0snRJLiEZdk17HeIDw=
 github.com/bnb-chain/greenfield-cosmos-sdk/math v0.0.0-20230425074444-eb5869b05fe9 h1:1ZdK+iR1Up02bOa2YTZCml7PBpP//kcdamOcK6aWO/s=
 github.com/bnb-chain/greenfield-cosmos-sdk/math v0.0.0-20230425074444-eb5869b05fe9/go.mod h1:Ygz4wBHrgc7g0N+8+MrnTfS9LLn9aaTGa9hKopuym5k=
-github.com/bnb-chain/greenfield-go-sdk v0.0.10-0.20230525065729-d9a6e2321190 h1:re35H+ipZGDmvf7Fs+LqlPmKi1Bcr/eIt8LjKpqyZEM=
-github.com/bnb-chain/greenfield-go-sdk v0.0.10-0.20230525065729-d9a6e2321190/go.mod h1:f2r/2Uned33Pq2fCvkggm66J7gc+EYCBGuQLKeybBqI=
+github.com/bnb-chain/greenfield-go-sdk v0.0.10-0.20230530072314-c2a0d682512d h1:P8ZAe5zdp+324kC06pcEloI+b+S+jTZ6S12W+JUP5hQ=
+github.com/bnb-chain/greenfield-go-sdk v0.0.10-0.20230530072314-c2a0d682512d/go.mod h1:NvfFjl8zrknM6WvSiQvzXKNaGUR5aegfv/dUvrdblzE=
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
 github.com/bradfitz/go-smtpd v0.0.0-20170404230938-deb6d6237625/go.mod h1:HYsPBTaaSFSlLx/70C2HPIMNZpVV8+vt/A+FMnYP11g=
 github.com/bradfitz/gomemcache v0.0.0-20170208213004-1952afaa557d/go.mod h1:PmM6Mmwb0LSuEubjR8N7PtNe1KxZLtOUHtbeikc5h60=
@@ -1365,10 +1365,10 @@ github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
-github.com/yutianwu/greenfield v0.0.0-20230519085954-d94f14ecdc3f h1:0FGvdDksB3GmVUGz1hdQmAOJn+sqLHkUiyMkevbSpY4=
-github.com/yutianwu/greenfield v0.0.0-20230519085954-d94f14ecdc3f/go.mod h1:FlseSJsf8mSCdn1lMcDJ5W9ca3OhITlzsyFB674tANw=
-github.com/yutianwu/greenfield-cosmos-sdk v0.0.0-20230519085332-06015effe9de h1:VmTpw7zS5w52D7+LCLYCl53o5Snw1MHppcwK2tmR+F0=
-github.com/yutianwu/greenfield-cosmos-sdk v0.0.0-20230519085332-06015effe9de/go.mod h1:6pVENKv7drpk0k46nuyvAeD1SMnQUuXD9WY0tyc060A=
+github.com/yutianwu/greenfield v0.0.0-20230530071334-e9bf94c067aa h1:k4YYvGMOwEemBeBztzsYi9YLPlua2rDnaUk3S/ALCaU=
+github.com/yutianwu/greenfield v0.0.0-20230530071334-e9bf94c067aa/go.mod h1:Nspm1kHJ1fUbFTbJz+QjIjBccfEBJmxiTGdwVUj2dAM=
+github.com/yutianwu/greenfield-cosmos-sdk v0.0.0-20230530071144-67c9acc94b96 h1:e87rvFlqk5TpgTfd6HgR2JXgFuX5bjyZQ2YWcAEnMtY=
+github.com/yutianwu/greenfield-cosmos-sdk v0.0.0-20230530071144-67c9acc94b96/go.mod h1:6pVENKv7drpk0k46nuyvAeD1SMnQUuXD9WY0tyc060A=
 github.com/zondax/hid v0.9.1 h1:gQe66rtmyZ8VeGFcOpbuH3r7erYtNEAezCAYu8LdkJo=
 github.com/zondax/hid v0.9.1/go.mod h1:l5wttcP0jwtdLjqjMMWFVEE7d1zO0jvSPA9OPZxWpEM=
 github.com/zondax/ledger-go v0.14.1 h1:Pip65OOl4iJ84WTpA4BKChvOufMhhbxED3BaihoZN4c=
