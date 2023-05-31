@@ -22,6 +22,8 @@ else
 	go build $(BUILD_FLAGS) -o build/sender cmd/sender/main.go
 endif
 
+all: build_executor build_observer build_sender
+
 local_up:
 	bash +x ./deployment/local_up.sh
 
