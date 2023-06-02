@@ -38,7 +38,7 @@ func (s *Sender) send() {
 			continue
 		}
 
-		res, err := s.sdkClient.SubmitExecutionResult(context.Background(), math.NewUint(uint64(task.TaskId)), uint32(task.ExecutionStatus), task.ResultDataUri, types.TxOption{})
+		res, err := s.sdkClient.SubmitExecutionResult(context.Background(), math.NewUint(uint64(task.TaskId)), uint32(0 /*task.ExecutionStatus*/), task.ResultDataUri, types.TxOption{})
 		if err != nil {
 			util.Logger.Errorf("submit execution result error: %s", err.Error())
 			continue

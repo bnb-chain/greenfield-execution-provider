@@ -10,9 +10,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 )
+
+const executableZip = "./wordcount.zip"
+const inputZip = "./input.zip"
+const outputDir = "./output"
 
 type Executor struct {
 	DB            *gorm.DB
@@ -28,6 +31,7 @@ type Receipt struct {
 }
 
 func unzipFile(fname string, dst string) {
+	fmt.Printf("try to unzip file %s to %s\n", fname, dst)
 	archive, err := zip.OpenReader(fname)
 	if err != nil {
 		panic(err)
@@ -38,10 +42,10 @@ func unzipFile(fname string, dst string) {
 		filePath := filepath.Join(dst, f.Name)
 		fmt.Println("unzipping file ", filePath)
 
-		if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
+		/*if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
 			fmt.Println("invalid file path")
 			return
-		}
+		}*/
 		if f.FileInfo().IsDir() {
 			fmt.Println("creating directory...")
 			os.MkdirAll(filePath, os.ModePerm)
@@ -92,10 +96,14 @@ func (ex *Executor) Start() {
 func (ex *Executor) tryInvokeExecuteTask() {
 	// 1. load executeTask from db, compare the taskID
 	executionTask := model.ExecutionTask{}
-	err := ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id >= ", model.ExecutionTaskStatusStatusInit,
-		ex.currentTaskId).Order("task_id asc").Take(&executionTask).Error()
+	fmt.Printf("trying to find execution task with taskID > %v\n", ex.currentTaskId)
+	err := ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id > ?", model.ExecutionTaskStatusStatusInit,
+		ex.currentTaskId).Order("task_id asc").Take(&executionTask).Error
 	if err != nil {
+		fmt.Println("tryInvokeExecuteTake error " + err.Error())
 		return
+	} else {
+		fmt.Println("find executionTask: " + executionTask.ExecutionObjectId)
 	}
 	ex.currentTaskId = executionTask.TaskId
 	// 2. download binary and data
@@ -109,21 +117,17 @@ func (ex *Executor) tryInvokeExecuteTask() {
 		return
 	}
 
-	args := []string{"./inputs/data.txt", "./outputs/result.txt"}
+	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
+		panic(err)
+	}
+	args := []string{"./wordcount/word_count.wasm", "./input/data.txt", "./output/result.txt"}
 	// 3. invoke iwasm - original design is to launch docker. here we directly start wasm runtime instead for PoC
 	cmd := exec.Command("./iwasm", args...)
-	stdout, err := cmd.StdoutPipe()
-	cmd.Stderr = cmd.Stdout
-	err = cmd.Run()
+	// err = cmd.Run()
 
-	for {
-		tmp := make([]byte, 1024)
-		_, err := stdout.Read(tmp)
-		fmt.Print(string(tmp))
-		if err != nil {
-			break
-		}
-	}
+	output, _ := cmd.CombinedOutput()
+	//fmt.Println("Command output: ", string(output))
+	writeBytesToFile("./output/log.txt", output)
 
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
@@ -154,11 +158,31 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	return
 }
 
+func writeBytesToFile(file string, output []byte) {
+	f, err := os.Create(file)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	num, err := f.Write(output)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("write %d bytes to file %s\n", num, file)
+}
+
 func (ex *Executor) downloadExecutable(uri string) error {
+	unzipFile(executableZip, "./")
 	return nil
 }
 
 func (ex *Executor) downloadInputFiles(files string) error {
+	unzipFile(inputZip, "./")
 	return nil
 }
 
@@ -169,7 +193,7 @@ func (ex *Executor) uploadResultsAndLogs() error {
 }
 
 func (ex *Executor) writeReceipt() error {
-	err := ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id == ", model.ExecutionTaskStatusStatusInit,
+	err := ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id == ?", model.ExecutionTaskStatusStatusInit,
 		ex.currentTaskId).Updates(
 		map[string]interface{}{
 			"status":           model.ExecutionTaskStatusStatusExecuted,

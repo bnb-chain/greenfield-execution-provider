@@ -1,6 +1,7 @@
 BUILD_TAGS = netgo
 PACKAGES=$(shell go list ./...)
 
+
 build_executor:
 ifeq ($(OS),Windows_NT)
 	go build $(BUILD_FLAGS) -o build/executor.exe cmd/executor/main.go
@@ -22,7 +23,10 @@ else
 	go build $(BUILD_FLAGS) -o build/sender cmd/sender/main.go
 endif
 
-all: build_executor build_observer build_sender
+build_config:
+	cp ./config/* build
+
+all: build_executor build_observer build_sender build_config
 
 local_up:
 	bash +x ./deployment/local_up.sh

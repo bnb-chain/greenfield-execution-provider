@@ -33,7 +33,7 @@ func initFlags() {
 }
 
 func printUsage() {
-	fmt.Print("usage: ./executor --config-path config_file_path\n")
+	fmt.Print("usage: ./sender --config-path config_file_path\n")
 }
 
 func main() {

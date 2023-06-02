@@ -32,7 +32,7 @@ func initFlags() {
 }
 
 func printUsage() {
-	fmt.Print("usage: ./executor --config-path config_file_path\n")
+	fmt.Print("usage: ./observer --config-path config_file_path\n")
 }
 
 func main() {
@@ -43,7 +43,9 @@ func main() {
 	configFilePath := viper.GetString(flagConfigPath)
 	if configFilePath == "" {
 		printUsage()
-		return
+		configFilePath = "config_observer.json"
+		fmt.Println("Use default config...")
+		//return
 	}
 	config = util.ParseObserverConfigFromFile(configFilePath)
 	config.Validate()
