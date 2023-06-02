@@ -21,6 +21,19 @@ func (cfg *ObserverConfig) Validate() {
 	cfg.AlertConfig.Validate()
 }
 
+type ExecutorConfig struct {
+	DBConfig         *DBConfig        `json:"db_config"`
+	GreenfieldConfig GreenfieldConfig `json:"greenfield_config"`
+	LogConfig        *LogConfig       `json:"log_config"`
+	AlertConfig      *AlertConfig     `json:"alert_config"`
+}
+
+func (cfg *ExecutorConfig) Validate() {
+	cfg.DBConfig.Validate()
+	cfg.LogConfig.Validate()
+	cfg.AlertConfig.Validate()
+}
+
 type SenderConfig struct {
 	DBConfig         *DBConfig        `json:"db_config"`
 	GreenfieldConfig GreenfieldConfig `json:"greenfield_config"`
@@ -99,6 +112,20 @@ func ParseObserverConfigFromFile(filePath string) *ObserverConfig {
 	}
 
 	var config ObserverConfig
+	if err := json.Unmarshal(bz, &config); err != nil {
+		panic(err)
+	}
+	return &config
+}
+
+// ParseExecutorConfigFromFile returns the config from json file
+func ParseExecutorConfigFromFile(filePath string) *ExecutorConfig {
+	bz, err := os.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	var config ExecutorConfig
 	if err := json.Unmarshal(bz, &config); err != nil {
 		panic(err)
 	}

@@ -37,14 +37,16 @@ func printUsage() {
 func main() {
 	initFlags()
 
-	var config *util.ObserverConfig
+	var config *util.ExecutorConfig
 
 	configFilePath := viper.GetString(flagConfigPath)
 	if configFilePath == "" {
 		printUsage()
-		return
+		fmt.Println("Use default executor config")
+		configFilePath = "config_executor.json"
+		// return
 	}
-	config = util.ParseObserverConfigFromFile(configFilePath)
+	config = util.ParseExecutorConfigFromFile(configFilePath)
 	config.Validate()
 
 	// init logger
