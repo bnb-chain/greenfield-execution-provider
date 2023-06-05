@@ -2,6 +2,7 @@ package executor
 
 import (
 	"archive/zip"
+	"encoding/json"
 	"fmt"
 	"github.com/bnb-chain/greenfield-execution-provider/common"
 	"github.com/bnb-chain/greenfield-execution-provider/model"
@@ -30,6 +31,11 @@ type Receipt struct {
 	logUri     string
 }
 
+type ExecutionReport struct {
+	GasUsed   int64  `json:"gasUsed"`
+	ResultMsg string `json:"resultMsg"`
+}
+
 func unzipFile(fname string, dst string) {
 	fmt.Printf("try to unzip file %s to %s\n", fname, dst)
 	archive, err := zip.OpenReader(fname)
@@ -42,10 +48,6 @@ func unzipFile(fname string, dst string) {
 		filePath := filepath.Join(dst, f.Name)
 		fmt.Println("unzipping file ", filePath)
 
-		/*if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
-			fmt.Println("invalid file path")
-			return
-		}*/
 		if f.FileInfo().IsDir() {
 			fmt.Println("creating directory...")
 			os.MkdirAll(filePath, os.ModePerm)
@@ -120,7 +122,8 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 		panic(err)
 	}
-	args := []string{"./wordcount/word_count.wasm", "./input/data.txt", "./output/result.txt"}
+	maxGasOption := "--max-gas=" + executionTask.MaxGas
+	args := []string{maxGasOption, "./wordcount/word_count.wasm", "./input/data.txt", "./output/result.txt"}
 	// 3. invoke iwasm - original design is to launch docker. here we directly start wasm runtime instead for PoC
 	cmd := exec.Command("./iwasm", args...)
 	// err = cmd.Run()
@@ -128,22 +131,29 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	output, _ := cmd.CombinedOutput()
 	//fmt.Println("Command output: ", string(output))
 	writeBytesToFile("./output/log.txt", output)
-
-	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			ex.receipt.returnCode = exitError.Error()
-			fmt.Printf("Command exited with return code: %d\n", ex.receipt.returnCode)
+	/*
+		if err != nil {
+			if exitError, ok := err.(*exec.ExitError); ok {
+				ex.receipt.returnCode = exitError.Error()
+				fmt.Printf("Command exited with return code: %d\n", ex.receipt.returnCode)
+			} else {
+				ex.receipt.returnCode = "Unknown error"
+				fmt.Printf("Command exited with unknown error!")
+			}
 		} else {
-			ex.receipt.returnCode = "Unknown error"
-			fmt.Printf("Command exited with unknown error!")
+			ex.receipt.returnCode = "Success"
+			fmt.Printf("Command exited successfully.")
 		}
-	} else {
-		ex.receipt.returnCode = "Success"
-		fmt.Printf("Command exited successfully.")
+	*/
+	executeReport, err := readExecuteReport("./report.json")
+	if err != nil {
+		fmt.Println(err)
+		ex.receipt.returnCode = err.Error()
 	}
+	ex.receipt.returnCode = executeReport.ResultMsg
+	ex.receipt.gasUsed = executeReport.GasUsed
 
-	// fixme! fake gas.
-	ex.receipt.gasUsed = 1023
+	fmt.Printf("result: gasUsed %d, returnCode %s\n", ex.receipt.gasUsed, ex.receipt.returnCode)
 	// 4. upload result data and logs
 	err = ex.uploadResultsAndLogs()
 	if err != nil {
@@ -156,6 +166,27 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	}
 	// 6. return
 	return
+}
+
+func readExecuteReport(reportJson string) (ExecutionReport, error) {
+
+	report := ExecutionReport{0, "nil"}
+	// Open report.json
+	jsonFile, err := os.Open(reportJson)
+	if err != nil {
+		return report, err
+	}
+	fmt.Println("Successfully Opened " + reportJson)
+	// defer the closing of our jsonFile so that we can parse it later on
+	defer jsonFile.Close()
+
+	byteValue, err := io.ReadAll(jsonFile)
+	if err != nil {
+		return report, err
+	}
+
+	err = json.Unmarshal(byteValue, &report)
+	return report, err
 }
 
 func writeBytesToFile(file string, output []byte) {
