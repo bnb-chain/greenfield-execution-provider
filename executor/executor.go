@@ -351,14 +351,12 @@ func (ex *Executor) writeReceipt() error {
 		fmt.Println("Fail to update executed task")
 		return err
 	}
-	var executionTask model.ExecutionTask
-	err = ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id = ?", model.ExecutionTaskStatusStatusExecuted,
-		ex.currentTaskId).Order("task_id asc").Take(&executionTask).Error
+
+	err = ex.DB.Commit().Error
 	if err != nil {
-		fmt.Println("Fail to read executed task")
+		util.Logger.Errorf("commit executed task error, err=%s", err.Error())
 		return err
 	}
-	fmt.Printf("Updated execution task in DB: gas_used %v, execution_status %s, resultID %s, logID: %s \n",
-		executionTask.GasUsed, executionTask.ExecutionStatus, executionTask.ResultDataUri, executionTask.LogDataUri)
+
 	return err
 }
