@@ -11,22 +11,25 @@ import (
 	"github.com/bnb-chain/greenfield-execution-provider/util"
 	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	"github.com/bnb-chain/greenfield-go-sdk/types"
+	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/client"
 	"github.com/jinzhu/gorm"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 )
 
 const downloadDir = "download"
-const executableZip = "./wordcount.zip"
-const inputZip = "./input.zip"
 const outputDir = "./output"
+const inputPath = "./input"
 
 // reuse the one for executable
 var outputBucketName string
+var executablePath string
 
 type Executor struct {
 	DB            *gorm.DB
@@ -138,30 +141,103 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 		panic(err)
 	}
-	maxGasOption := "--max-gas=" + executionTask.MaxGas
-	args := []string{maxGasOption, "./wordcount/word_count.wasm", "./input/data.txt", "./output/result.txt"}
-	// 3. invoke iwasm - original design is to launch docker. here we directly start wasm runtime instead for PoC
-	cmd := exec.Command("./iwasm", args...)
-	// err = cmd.Run()
 
-	output, _ := cmd.CombinedOutput()
-	//fmt.Println("Command output: ", string(output))
-	writeBytesToFile("./output/log.txt", output)
-	/*
+	max_gas_env := "MAX_GAS=" + executionTask.MaxGas
+	// TODO: use package.json to identify the path
+	wasm_file_env := "WASM_FILE=" + "./wordcount/word_count.wasm"
+	input_file_env := "INPUT_FILES=" + inputPath + "/data.txt"
+	output_file_env := "OUTPUT_FILES=" + outputDir + "/result.txt"
+	argsEnv := []string{max_gas_env, wasm_file_env, input_file_env, output_file_env}
+
+	abs_dir, err := filepath.Abs("./")
+
+	wasm_mount_dir := abs_dir + "/wordcount"
+	input_mount_dir := abs_dir + "/input"
+	output_mount_dir := abs_dir + "/output"
+	if err != nil {
+		panic(err)
+	}
+
+	// Pull Docker image
+	ctx := context.Background()
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		panic(err)
+	}
+	defer cli.Close()
+
+	reader, err := cli.ImagePull(ctx, "sunny2022za/playground:gnfdexe", dockertypes.ImagePullOptions{})
+	if err != nil {
+		panic(err)
+	}
+
+	defer reader.Close()
+	io.Copy(os.Stdout, reader)
+
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: "gnfdexe",
+		Env:   argsEnv,
+		Tty:   false,
+	}, &container.HostConfig{
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: wasm_mount_dir,
+				Target: "/opt/gnfd/workdir/wordcount",
+			},
+			{
+				Type:   mount.TypeBind,
+				Source: input_mount_dir,
+				Target: "/opt/gnfd/workdir/input",
+			},
+			{
+				Type:   mount.TypeBind,
+				Source: output_mount_dir,
+				Target: "/opt/gnfd/workdir/output",
+			},
+		},
+	}, nil, nil, "")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("start Container " + resp.ID)
+	if err := cli.ContainerStart(ctx, resp.ID, dockertypes.ContainerStartOptions{}); err != nil {
+		fmt.Println(err.Error())
+		panic(err)
+	}
+	fmt.Println("wait Container " + resp.ID)
+	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
 		if err != nil {
-			if exitError, ok := err.(*exec.ExitError); ok {
-				ex.receipt.returnCode = exitError.Error()
-				fmt.Printf("Command exited with return code: %d\n", ex.receipt.returnCode)
-			} else {
-				ex.receipt.returnCode = "Unknown error"
-				fmt.Printf("Command exited with unknown error!")
-			}
-		} else {
-			ex.receipt.returnCode = "Success"
-			fmt.Printf("Command exited successfully.")
+			fmt.Println(err.Error())
+			panic(err)
 		}
+	case <-statusCh:
+	}
+
+	out, err := cli.ContainerLogs(ctx, resp.ID, dockertypes.ContainerLogsOptions{ShowStdout: true})
+	if err != nil {
+		panic(err)
+	}
+	//stdcopy.StdCopy(os.Stdout, os.Stderr, out)
+	f, err := os.Create("./output/log.txt")
+	io.Copy(f, out)
+
+	/*
+		maxGasOption := "--max-gas=" + executionTask.MaxGas
+		args := []string{maxGasOption, "./wordcount/word_count.wasm", "./input/data.txt", "./output/result.txt"}
+		// 3. invoke iwasm - original design is to launch docker. here we directly start wasm runtime instead for PoC
+		cmd := exec.Command("./iwasm", args...)
+		// err = cmd.Run()
+
+		output, _ := cmd.CombinedOutput()
+		//fmt.Println("Command output: ", string(output))
+		writeBytesToFile("./output/log.txt", output)
+
 	*/
-	executeReport, err := readExecuteReport("./report.json")
+
+	executeReport, err := readExecuteReport("./output/report.json")
 	if err != nil {
 		fmt.Println(err)
 		ex.receipt.returnCode = err.Error()
