@@ -59,7 +59,7 @@ func main() {
 	defer db.Close()
 	model.InitTables(db)
 
-	account, err := sdktypes.NewAccountFromPrivateKey("sender", config.GreenfieldConfig.PrivateKey)
+	account, err := sdktypes.NewAccountFromMnemonic("sender", config.GreenfieldConfig.PrivateKey)
 	if err != nil {
 		panic(err)
 	}

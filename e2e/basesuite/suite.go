@@ -51,7 +51,7 @@ type BaseSuite struct {
 
 // ParseValidatorMnemonic read the validator mnemonic from file
 func ParseValidatorMnemonic(i int) string {
-	return ParseMnemonicFromFile(fmt.Sprintf("/Users/david/source/sunny/greenfield-execution-provider/deployment/.local/greenfield/deployment/localup/.local/validator%d/info", i))
+	return ParseMnemonicFromFile(fmt.Sprintf("../deployment/.local/greenfield/deployment/localup/.local/validator%d/info", i))
 }
 
 func (s *BaseSuite) SetupSuite() {

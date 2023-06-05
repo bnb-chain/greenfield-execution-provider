@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/bnb-chain/greenfield-execution-provider/common"
-	"github.com/bnb-chain/greenfield-execution-provider/model"
-	"github.com/bnb-chain/greenfield-execution-provider/util"
 	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
 	"github.com/bnb-chain/greenfield/sdk/types"
 	"github.com/jinzhu/gorm"
+
+	"github.com/bnb-chain/greenfield-execution-provider/common"
+	"github.com/bnb-chain/greenfield-execution-provider/model"
+	"github.com/bnb-chain/greenfield-execution-provider/util"
 )
 
 type Sender struct {
@@ -43,6 +44,8 @@ func (s *Sender) send() {
 			util.Logger.Errorf("submit execution result error: %s", err.Error())
 			continue
 		}
+
+		util.Logger.Infof("submit execution result success, txHash=%s", res.TxHash)
 
 		err = s.DB.Model(&model.ExecutionTask{}).Where("task_id = ?", task.TaskId).Updates(map[string]interface{}{
 			"status":         model.ExecutionTaskStatusStatusReceiptSubmitted,
