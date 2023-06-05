@@ -2,10 +2,14 @@ package executor
 
 import (
 	"archive/zip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/bnb-chain/greenfield-execution-provider/common"
 	"github.com/bnb-chain/greenfield-execution-provider/model"
+	"github.com/bnb-chain/greenfield-execution-provider/util"
+	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
+	"github.com/bnb-chain/greenfield-go-sdk/types"
 	"github.com/jinzhu/gorm"
 	"io"
 	"os"
@@ -14,12 +18,14 @@ import (
 	"time"
 )
 
+const downloadDir = "download"
 const executableZip = "./wordcount.zip"
 const inputZip = "./input.zip"
 const outputDir = "./output"
 
 type Executor struct {
 	DB            *gorm.DB
+	Client        sdkclient.Client
 	currentTaskId int64
 	receipt       Receipt
 }
@@ -78,13 +84,18 @@ func unzipFile(fname string, dst string) {
 }
 
 // NewExecutor returns the executor instance
-func NewExecutor(db *gorm.DB) *Executor {
-	return &Executor{db, 0, Receipt{
-		gasUsed:    0,
-		returnCode: "",
-		resultUri:  "",
-		logUri:     "",
-	}}
+func NewExecutor(db *gorm.DB, client sdkclient.Client) *Executor {
+	return &Executor{
+		db,
+		client,
+		0,
+		Receipt{
+			gasUsed:    0,
+			returnCode: "",
+			resultUri:  "",
+			logUri:     "",
+		},
+	}
 }
 
 // Start starts the routines of executor
@@ -109,7 +120,7 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	}
 	ex.currentTaskId = executionTask.TaskId
 	// 2. download binary and data
-	err = ex.downloadExecutable(executionTask.ExecutionUri)
+	err = ex.downloadExecutable(executionTask.ExecutionObjectId)
 	if err != nil {
 		return
 	}
@@ -207,13 +218,59 @@ func writeBytesToFile(file string, output []byte) {
 	fmt.Printf("write %d bytes to file %s\n", num, file)
 }
 
-func (ex *Executor) downloadExecutable(uri string) error {
-	unzipFile(executableZip, "./")
+func (ex *Executor) downloadObject(objectId string) error {
+	// create download dir
+	_ = os.Mkdir(downloadDir, os.ModePerm)
+
+	objectInfo, err := ex.Client.HeadObjectByID(context.Background(), objectId)
+	if err != nil {
+		return err
+	}
+
+	ior, _, err := ex.Client.GetObject(context.Background(), objectInfo.BucketName, objectInfo.ObjectName, types.GetObjectOption{})
+	if err != nil {
+		return err
+	}
+
+	bts, err := io.ReadAll(ior)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(fmt.Sprintf("./%s/%s", downloadDir, objectId), bts, 0644)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (ex *Executor) downloadInputFiles(files string) error {
-	unzipFile(inputZip, "./")
+func (ex *Executor) downloadExecutable(objectId string) error {
+	util.Logger.Infof("try to download executable, objectId=%s", objectId)
+	err := ex.downloadObject(objectId)
+	if err != nil {
+		util.Logger.Errorf("download executable failed, err=%s", err.Error())
+		return err
+	}
+	//unzipFile(executableZip, "./")
+	return nil
+}
+
+func (ex *Executor) downloadInputFiles(objectIds string) error {
+	util.Logger.Infof("try to download inputs, objects=%s", objectIds)
+	inputObjects := make([]string, 0)
+	err := json.Unmarshal([]byte(objectIds), &inputObjects)
+	if err != nil {
+		return err
+	}
+
+	for _, objectId := range inputObjects {
+		err = ex.downloadObject(objectId)
+		if err != nil {
+			return err
+		}
+	}
+
+	//unzipFile(inputZip, "./")
 	return nil
 }
 

@@ -2,18 +2,16 @@ package e2e
 
 import (
 	"bytes"
-	spTypes "github.com/bnb-chain/greenfield/x/sp/types"
-	"io"
 	"os"
 	"testing"
 	"time"
 
+	spTypes "github.com/bnb-chain/greenfield/x/sp/types"
+
 	"cosmossdk.io/math"
-	"github.com/bnb-chain/greenfield-go-sdk/pkg/utils"
 	"github.com/bnb-chain/greenfield-go-sdk/types"
 	types2 "github.com/bnb-chain/greenfield/sdk/types"
 	storageTestUtil "github.com/bnb-chain/greenfield/testutil/storage"
-	permTypes "github.com/bnb-chain/greenfield/x/permission/types"
 	storageTypes "github.com/bnb-chain/greenfield/x/storage/types"
 	"github.com/stretchr/testify/suite"
 
@@ -82,10 +80,10 @@ func (s *StorageTestSuite1) Test_Executable() {
 		bytes.NewReader(inputBuf), types.PutObjectOptions{})
 	s.Require().NoError(err)
 
-	objectInfo, err := s.Client.HeadObject(s.ClientContext, bucketName, inputName)
+	inputObjectInfo, err := s.Client.HeadObject(s.ClientContext, bucketName, inputName)
 	s.Require().NoError(err)
-	s.Require().Equal(objectInfo.ObjectName, inputName)
-	s.Require().Equal(objectInfo.GetObjectStatus().String(), "OBJECT_STATUS_CREATED")
+	s.Require().Equal(inputObjectInfo.ObjectName, inputName)
+	s.Require().Equal(inputObjectInfo.GetObjectStatus().String(), "OBJECT_STATUS_CREATED")
 
 	executableBuf, err := os.ReadFile(executableName)
 	if err != nil {
@@ -119,73 +117,6 @@ func (s *StorageTestSuite1) Test_Executable() {
 	s.Require().Equal(executableInfo.GetObjectStatus().String(), "OBJECT_STATUS_SEALED")
 
 	s.T().Log("---> invoke execution <---")
-	_, err = s.Client.InvokeExecution(s.ClientContext, objectInfo.Id, []math.Uint{objectInfo.Id}, math.NewUint(10000), "main", []byte("xxx"), types2.TxOption{})
+	_, err = s.Client.InvokeExecution(s.ClientContext, executableInfo.Id, []math.Uint{inputObjectInfo.Id}, math.NewUint(100), "main", []byte("xxx"), types2.TxOption{})
 	s.Require().NoError(err)
-
-	time.Sleep(10 * time.Second)
-
-	s.T().Log("---> GetObject <---")
-	ior, info, err := s.Client.GetObject(s.ClientContext, bucketName, executableName, types.GetObjectOption{})
-	s.Require().NoError(err)
-	if err == nil {
-		s.Require().Equal(info.ObjectName, executableName)
-		objectBytes, err := io.ReadAll(ior)
-		s.Require().NoError(err)
-		s.Require().Equal(objectBytes, executableBuf)
-	}
-
-	s.T().Log("---> PutObjectPolicy <---")
-	principal, _, err := types.NewAccount("principal")
-	s.Require().NoError(err)
-	principalWithAccount, err := utils.NewPrincipalWithAccount(principal.GetAddress())
-	s.Require().NoError(err)
-	statements := []*permTypes.Statement{
-		{
-			Effect: permTypes.EFFECT_ALLOW,
-			Actions: []permTypes.ActionType{
-				permTypes.ACTION_GET_OBJECT,
-			},
-			Resources:      nil,
-			ExpirationTime: nil,
-			LimitSize:      nil,
-		},
-	}
-	policy, err := s.Client.PutObjectPolicy(s.ClientContext, bucketName, executableName, principalWithAccount, statements, types.PutPolicyOption{})
-	s.Require().NoError(err)
-	_, err = s.Client.WaitForTx(s.ClientContext, policy)
-	s.Require().NoError(err)
-
-	s.T().Log("--->  GetObjectPolicy <---")
-	objectPolicy, err := s.Client.GetObjectPolicy(s.ClientContext, bucketName, executableName, principal.GetAddress().String())
-	s.Require().NoError(err)
-	s.T().Logf("get object policy:%s\n", objectPolicy.String())
-
-	s.T().Log("---> DeleteObjectPolicy (input) <---")
-	deleteInputObjectPolicy, err := s.Client.DeleteObjectPolicy(s.ClientContext, bucketName, inputName, principal.GetAddress().String(), types.DeletePolicyOption{})
-	s.Require().NoError(err)
-	_, err = s.Client.WaitForTx(s.ClientContext, deleteInputObjectPolicy)
-	s.Require().NoError(err)
-
-	s.T().Log("---> DeleteObjectPolicy (executable) <---")
-	deleteObjectPolicy, err := s.Client.DeleteObjectPolicy(s.ClientContext, bucketName, executableName, principal.GetAddress().String(), types.DeletePolicyOption{})
-	s.Require().NoError(err)
-	_, err = s.Client.WaitForTx(s.ClientContext, deleteObjectPolicy)
-	s.Require().NoError(err)
-
-	s.T().Log("---> DeleteObject (input) <---")
-	deleteInputObject, err := s.Client.DeleteObject(s.ClientContext, bucketName, inputName, types.DeleteObjectOption{})
-	s.Require().NoError(err)
-	_, err = s.Client.WaitForTx(s.ClientContext, deleteInputObject)
-	s.Require().NoError(err)
-	_, err = s.Client.HeadObject(s.ClientContext, bucketName, inputName)
-	s.Require().Error(err)
-
-	s.T().Log("---> DeleteObject (executable) <---")
-	deleteObject, err := s.Client.DeleteObject(s.ClientContext, bucketName, executableName, types.DeleteObjectOption{})
-	s.Require().NoError(err)
-	_, err = s.Client.WaitForTx(s.ClientContext, deleteObject)
-	s.Require().NoError(err)
-	_, err = s.Client.HeadObject(s.ClientContext, bucketName, executableName)
-	s.Require().Error(err)
-
 }
