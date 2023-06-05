@@ -2,6 +2,7 @@ package executor
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -22,6 +24,9 @@ const downloadDir = "download"
 const executableZip = "./wordcount.zip"
 const inputZip = "./input.zip"
 const outputDir = "./output"
+
+// reuse the one for executable
+var outputBucketName string
 
 type Executor struct {
 	DB            *gorm.DB
@@ -31,14 +36,14 @@ type Executor struct {
 }
 
 type Receipt struct {
-	gasUsed    int64
-	returnCode string
-	resultUri  string
-	logUri     string
+	gasUsed        uint64
+	returnCode     string
+	resultObjectId string
+	logObjectId    string
 }
 
 type ExecutionReport struct {
-	GasUsed   int64  `json:"gasUsed"`
+	GasUsed   uint64 `json:"gasUsed"`
 	ResultMsg string `json:"resultMsg"`
 }
 
@@ -90,10 +95,10 @@ func NewExecutor(db *gorm.DB, client sdkclient.Client) *Executor {
 		client,
 		0,
 		Receipt{
-			gasUsed:    0,
-			returnCode: "",
-			resultUri:  "",
-			logUri:     "",
+			gasUsed:        0,
+			returnCode:     "",
+			resultObjectId: "",
+			logObjectId:    "",
 		},
 	}
 }
@@ -218,40 +223,43 @@ func writeBytesToFile(file string, output []byte) {
 	fmt.Printf("write %d bytes to file %s\n", num, file)
 }
 
-func (ex *Executor) downloadObject(objectId string) error {
+func (ex *Executor) downloadObject(objectId string) (string, error) {
 	// create download dir
 	_ = os.Mkdir(downloadDir, os.ModePerm)
 
 	objectInfo, err := ex.Client.HeadObjectByID(context.Background(), objectId)
 	if err != nil {
-		return err
+		return "", err
 	}
+
+	// remember the executable object bucket name for result upload
+	outputBucketName = objectInfo.BucketName
 
 	ior, _, err := ex.Client.GetObject(context.Background(), objectInfo.BucketName, objectInfo.ObjectName, types.GetObjectOption{})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	bts, err := io.ReadAll(ior)
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	err = os.WriteFile(fmt.Sprintf("./%s/%s", downloadDir, objectId), bts, 0644)
+	filepath := fmt.Sprintf("./%s/%s", downloadDir, objectInfo.ObjectName)
+	err = os.WriteFile(filepath, bts, 0644)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return filepath, err
 }
 
 func (ex *Executor) downloadExecutable(objectId string) error {
 	util.Logger.Infof("try to download executable, objectId=%s", objectId)
-	err := ex.downloadObject(objectId)
+	executableZip, err := ex.downloadObject(objectId)
 	if err != nil {
 		util.Logger.Errorf("download executable failed, err=%s", err.Error())
 		return err
 	}
-	//unzipFile(executableZip, "./")
+	unzipFile(executableZip, "./")
 	return nil
 }
 
@@ -264,20 +272,68 @@ func (ex *Executor) downloadInputFiles(objectIds string) error {
 	}
 
 	for _, objectId := range inputObjects {
-		err = ex.downloadObject(objectId)
+		inputPath, err := ex.downloadObject(objectId)
 		if err != nil {
 			return err
 		}
+		if strings.HasSuffix(inputPath, ".zip") {
+			unzipFile(inputPath, "./")
+		}
 	}
-
-	//unzipFile(inputZip, "./")
 	return nil
 }
 
+func (ex *Executor) uploadFile(dir string, fileName string) (string, error) {
+	// read file
+	filepath := dir + "/" + fileName
+	dataBuf, err := os.ReadFile(filepath)
+	if err != nil {
+		fmt.Println("Can not read input file: " + filepath)
+		return "", err
+	}
+
+	fmt.Printf("---> CreateObject (%s) and HeadObject <---\n", fileName)
+	uploadTx, err := ex.Client.CreateObject(context.Background(), outputBucketName, fileName, bytes.NewReader(dataBuf), types.CreateObjectOptions{})
+	if err != nil {
+		fmt.Println("Error create object: " + err.Error())
+		return "", err
+	}
+	_, err = ex.Client.WaitForTx(context.Background(), uploadTx)
+	if err != nil {
+		fmt.Println("Error wait TX: " + err.Error())
+		return "", err
+	}
+
+	time.Sleep(5 * time.Second)
+
+	fmt.Printf("---> PutObject (%s) <---\n", fileName)
+	err = ex.Client.PutObject(context.Background(), outputBucketName, fileName, int64(len(dataBuf)),
+		bytes.NewReader(dataBuf), types.PutObjectOptions{})
+	if err != nil {
+		fmt.Println("Error put object: " + err.Error())
+		return "", err
+	}
+	time.Sleep(10 * time.Second)
+	dataObjectInfo, err := ex.Client.HeadObject(context.Background(), outputBucketName, fileName)
+	if err != nil {
+		fmt.Println("Error HeadObject: " + err.Error())
+		return "", err
+	}
+	fmt.Printf("Upload object %s, get ObjectID %s\n", filepath, dataObjectInfo.Id.String())
+	return dataObjectInfo.Id.String(), nil
+}
+
 func (ex *Executor) uploadResultsAndLogs() error {
-	ex.receipt.resultUri = ""
-	ex.receipt.logUri = ""
-	return nil
+
+	resultObjectId, err := ex.uploadFile(outputDir, "result.txt")
+	if err != nil {
+		return err
+	}
+	logObjectId, err := ex.uploadFile(outputDir, "log.txt")
+
+	ex.receipt.resultObjectId = resultObjectId
+	ex.receipt.logObjectId = logObjectId
+	return err
 }
 
 func (ex *Executor) writeReceipt() error {
@@ -287,8 +343,18 @@ func (ex *Executor) writeReceipt() error {
 			"status":           model.ExecutionTaskStatusStatusExecuted,
 			"gas_used":         ex.receipt.gasUsed,
 			"execution_status": ex.receipt.returnCode,
-			"result_data_uri":  ex.receipt.resultUri,
-			"log_data_uri":     ex.receipt.logUri,
+			"result_data_uri":  ex.receipt.resultObjectId,
+			"log_data_uri":     ex.receipt.logObjectId,
 		}).Error
+
+	var executionTask model.ExecutionTask
+	err = ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id > ?", model.ExecutionTaskStatusStatusExecuted,
+		ex.currentTaskId).Order("task_id asc").Take(&executionTask).Error
+	if err != nil {
+		fmt.Println("Fail to read executed task")
+		return err
+	}
+	fmt.Printf("Updated execution task in DB: gas_used %l, execution_status %s, resultID %s, logID: %s \n",
+		executionTask.GasUsed, executionTask.ExecutionStatus, executionTask.ResultDataUri, executionTask.LogDataUri)
 	return err
 }

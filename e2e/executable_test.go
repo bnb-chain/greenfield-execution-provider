@@ -117,6 +117,6 @@ func (s *StorageTestSuite1) Test_Executable() {
 	s.Require().Equal(executableInfo.GetObjectStatus().String(), "OBJECT_STATUS_SEALED")
 
 	s.T().Log("---> invoke execution <---")
-	_, err = s.Client.InvokeExecution(s.ClientContext, executableInfo.Id, []math.Uint{inputObjectInfo.Id}, math.NewUint(100), "main", []byte("xxx"), types2.TxOption{})
+	_, err = s.Client.InvokeExecution(s.ClientContext, executableInfo.Id, []math.Uint{inputObjectInfo.Id}, math.NewUint(10000), "main", []byte("xxx"), types2.TxOption{})
 	s.Require().NoError(err)
 }
