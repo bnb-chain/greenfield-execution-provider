@@ -292,7 +292,7 @@ func (ex *Executor) uploadFile(dir string, fileName string) (string, error) {
 		return "", err
 	}
 
-	fmt.Printf("---> CreateObject (%s) and HeadObject <---\n", fileName)
+	fmt.Printf("---> CreateObject (%s) and HeadObject into bucket (%s) <---\n", fileName, outputBucketName)
 	uploadTx, err := ex.Client.CreateObject(context.Background(), outputBucketName, fileName, bytes.NewReader(dataBuf), types.CreateObjectOptions{})
 	if err != nil {
 		fmt.Println("Error create object: " + err.Error())
@@ -337,7 +337,7 @@ func (ex *Executor) uploadResultsAndLogs() error {
 }
 
 func (ex *Executor) writeReceipt() error {
-	err := ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id == ?", model.ExecutionTaskStatusStatusInit,
+	err := ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id = ?", model.ExecutionTaskStatusStatusInit,
 		ex.currentTaskId).Updates(
 		map[string]interface{}{
 			"status":           model.ExecutionTaskStatusStatusExecuted,
@@ -347,14 +347,18 @@ func (ex *Executor) writeReceipt() error {
 			"log_data_uri":     ex.receipt.logObjectId,
 		}).Error
 
+	if err != nil {
+		fmt.Println("Fail to update executed task")
+		return err
+	}
 	var executionTask model.ExecutionTask
-	err = ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id > ?", model.ExecutionTaskStatusStatusExecuted,
+	err = ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id = ?", model.ExecutionTaskStatusStatusExecuted,
 		ex.currentTaskId).Order("task_id asc").Take(&executionTask).Error
 	if err != nil {
 		fmt.Println("Fail to read executed task")
 		return err
 	}
-	fmt.Printf("Updated execution task in DB: gas_used %l, execution_status %s, resultID %s, logID: %s \n",
+	fmt.Printf("Updated execution task in DB: gas_used %v, execution_status %s, resultID %s, logID: %s \n",
 		executionTask.GasUsed, executionTask.ExecutionStatus, executionTask.ResultDataUri, executionTask.LogDataUri)
 	return err
 }
