@@ -117,11 +117,11 @@ func (ex *Executor) Start() {
 func (ex *Executor) tryInvokeExecuteTask() {
 	// 1. load executeTask from db, compare the taskID
 	executionTask := model.ExecutionTask{}
-	fmt.Printf("trying to find execution task with taskID > %v\n", ex.currentTaskId)
+	// fmt.Printf("trying to find execution task with taskID > %v\n", ex.currentTaskId)
 	err := ex.DB.Model(&model.ExecutionTask{}).Where("status = ? and task_id > ?", model.ExecutionTaskStatusStatusInit,
 		ex.currentTaskId).Order("task_id asc").Take(&executionTask).Error
 	if err != nil {
-		fmt.Println("tryInvokeExecuteTake error " + err.Error())
+		// fmt.Println("tryInvokeExecuteTake error " + err.Error())
 		return
 	} else {
 		fmt.Println("find executionTask: " + executionTask.ExecutionObjectId)
@@ -247,7 +247,7 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	fmt.Printf("result: gasUsed %d, returnCode %s\n", ex.receipt.gasUsed, ex.receipt.returnCode)
 	// 4. stop and destroy container
 	stopAndRemoveContainer(ctx, cli, resp.ID)
-	
+
 	// 5. upload result data and logs
 	err = ex.uploadResultsAndLogs()
 	if err != nil {
@@ -442,12 +442,6 @@ func (ex *Executor) writeReceipt() error {
 
 	if err != nil {
 		fmt.Println("Fail to update executed task")
-		return err
-	}
-
-	err = ex.DB.Commit().Error
-	if err != nil {
-		util.Logger.Errorf("commit executed task error, err=%s", err.Error())
 		return err
 	}
 
