@@ -236,7 +236,6 @@ func (ex *Executor) tryInvokeExecuteTask() {
 		writeBytesToFile("./output/log.txt", output)
 
 	*/
-
 	executeReport, err := readExecuteReport("./output/report.json")
 	if err != nil {
 		fmt.Println(err)
@@ -246,18 +245,36 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	ex.receipt.gasUsed = executeReport.GasUsed
 
 	fmt.Printf("result: gasUsed %d, returnCode %s\n", ex.receipt.gasUsed, ex.receipt.returnCode)
-	// 4. upload result data and logs
+	// 4. stop and destroy container
+	stopAndRemoveContainer(ctx, cli, resp.ID)
+	
+	// 5. upload result data and logs
 	err = ex.uploadResultsAndLogs()
 	if err != nil {
 		return
 	}
-	// 5. write receipt into db
+	// 6. write receipt into db
 	err = ex.writeReceipt()
 	if err != nil {
 		return
 	}
-	// 6. return
+
 	return
+}
+
+func stopAndRemoveContainer(ctx context.Context, cli *client.Client, id string) {
+	fmt.Println("stop and destroy container: " + id)
+	if err := cli.ContainerStop(ctx, id, nil); err != nil {
+		panic(err)
+	}
+	removeOptions := dockertypes.ContainerRemoveOptions{
+		RemoveVolumes: true,
+		Force:         true,
+	}
+
+	if err := cli.ContainerRemove(ctx, id, removeOptions); err != nil {
+		fmt.Printf("Unable to remove container: %s\n", err)
+	}
 }
 
 func readExecuteReport(reportJson string) (ExecutionReport, error) {
