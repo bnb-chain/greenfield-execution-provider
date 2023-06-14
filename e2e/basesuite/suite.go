@@ -59,6 +59,7 @@ func (s *BaseSuite) SetupSuite() {
 	mnemonic := ParseValidatorMnemonic(0)
 	account, err := types.NewAccountFromMnemonic("test", mnemonic)
 	print(mnemonic)
+	print("\n")
 	s.Require().NoError(err)
 	s.Client, err = client.New(ChainID, Endpoint, client.Option{
 		DefaultAccount: account,

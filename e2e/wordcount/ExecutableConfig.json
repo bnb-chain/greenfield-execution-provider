@@ -1,0 +1,28 @@
+{
+  "name": "wordcount",
+  "version": "1.0.0",
+  "author" : "0x12345678",
+  "binaryDigest" : "",
+  "sourceCodeFile" : "",
+  "sourceCodeDigest" : "",
+  "abi" : {
+    "entry" : "main",
+    "signature" : "V(char*, char*)"
+  },
+  "executable" : {
+    "wasmMainFile" : "word_count.wasm",
+    "wasmLibraries" : ""
+  },
+  "data" : {
+    "inputDir" : "input",
+    "inputFiles" : ["data.txt"],
+    "outputDir" : "output",
+    "logDir" : "output",
+    "outputFiles" : ["result.txt"]
+  },
+  "capabilities" : {
+    "fileOps" : {
+      "nativeFile":{ "read" : true, "write" : true, "create" : true }
+    }
+  }
+}
