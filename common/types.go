@@ -1,6 +1,8 @@
 package common
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	ObserverMaxBlockNumber = 10000

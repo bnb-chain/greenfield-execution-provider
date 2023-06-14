@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 
-	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
-	sdktypes "github.com/bnb-chain/greenfield-go-sdk/types"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -15,6 +13,8 @@ import (
 	"github.com/bnb-chain/greenfield-execution-provider/model"
 	"github.com/bnb-chain/greenfield-execution-provider/sender"
 	"github.com/bnb-chain/greenfield-execution-provider/util"
+	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
+	sdktypes "github.com/bnb-chain/greenfield-go-sdk/types"
 )
 
 const (

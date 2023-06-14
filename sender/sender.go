@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
-	"github.com/bnb-chain/greenfield/sdk/types"
 	"github.com/jinzhu/gorm"
 
 	"github.com/bnb-chain/greenfield-execution-provider/common"
 	"github.com/bnb-chain/greenfield-execution-provider/model"
 	"github.com/bnb-chain/greenfield-execution-provider/util"
+	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
+	"github.com/bnb-chain/greenfield/sdk/types"
 )
 
 type Sender struct {

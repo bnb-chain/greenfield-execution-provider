@@ -4,20 +4,17 @@ import (
 	"flag"
 	"fmt"
 
-	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
-	"github.com/bnb-chain/greenfield-go-sdk/types"
-
-	"github.com/bnb-chain/greenfield-execution-provider/executor"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/bnb-chain/greenfield-execution-provider/executor"
 	"github.com/bnb-chain/greenfield-execution-provider/model"
-
 	"github.com/bnb-chain/greenfield-execution-provider/util"
+	sdkclient "github.com/bnb-chain/greenfield-go-sdk/client"
+	"github.com/bnb-chain/greenfield-go-sdk/types"
 )
 
 const (

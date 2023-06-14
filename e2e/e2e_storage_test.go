@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/bnb-chain/greenfield-execution-provider/e2e/basesuite"
 	"github.com/bnb-chain/greenfield-go-sdk/pkg/utils"
 	"github.com/bnb-chain/greenfield-go-sdk/types"
 	types2 "github.com/bnb-chain/greenfield/sdk/types"
@@ -15,9 +18,6 @@ import (
 	permTypes "github.com/bnb-chain/greenfield/x/permission/types"
 	spTypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storageTypes "github.com/bnb-chain/greenfield/x/storage/types"
-	"github.com/stretchr/testify/suite"
-
-	"github.com/bnb-chain/greenfield-execution-provider/e2e/basesuite"
 )
 
 type StorageTestSuite struct {

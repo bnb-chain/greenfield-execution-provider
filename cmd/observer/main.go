@@ -4,15 +4,15 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/bnb-chain/greenfield-execution-provider/client"
-	"github.com/bnb-chain/greenfield-execution-provider/model"
-	"github.com/bnb-chain/greenfield-execution-provider/observer"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/bnb-chain/greenfield-execution-provider/client"
+	"github.com/bnb-chain/greenfield-execution-provider/model"
+	"github.com/bnb-chain/greenfield-execution-provider/observer"
 	"github.com/bnb-chain/greenfield-execution-provider/util"
 )
 

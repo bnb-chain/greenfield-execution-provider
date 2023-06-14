@@ -9,7 +9,7 @@ rm -rf ${workspace}/.local
 mkdir -p ${workspace}/.local
 
 # build greenfield
-git clone https://github.com/yutianwu/greenfield.git ${workspace}/.local/greenfield
+git clone https://github.com/bnb-chain/greenfield.git ${workspace}/.local/greenfield
 cd ${workspace}/.local/greenfield
 git checkout executable
 go get github.com/ghodss/yaml
@@ -19,7 +19,7 @@ make build
 # build greenfield-storage-provider
 git clone https://github.com/bnb-chain/greenfield-storage-provider.git ${workspace}/.local/greenfield-storage-provider
 cd ${workspace}/.local/greenfield-storage-provider
-git checkout fix-signer
+git checkout v0.2.2-alpha.1
 make install-tools
 make build
 

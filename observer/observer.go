@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jinzhu/gorm"
+
 	"github.com/bnb-chain/greenfield-execution-provider/client"
 	"github.com/bnb-chain/greenfield-execution-provider/common"
 	"github.com/bnb-chain/greenfield-execution-provider/model"
 	"github.com/bnb-chain/greenfield-execution-provider/util"
-	"github.com/jinzhu/gorm"
 )
 
 type Observer struct {
