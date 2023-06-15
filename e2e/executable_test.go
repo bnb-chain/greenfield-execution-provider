@@ -3,14 +3,40 @@ package e2e
 import (
 	"bytes"
 	"os"
+	"testing"
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/bnb-chain/greenfield-execution-provider/e2e/basesuite"
 	"github.com/bnb-chain/greenfield-go-sdk/types"
 	types2 "github.com/bnb-chain/greenfield/sdk/types"
 	storageTestUtil "github.com/bnb-chain/greenfield/testutil/storage"
+	spTypes "github.com/bnb-chain/greenfield/x/sp/types"
 	storageTypes "github.com/bnb-chain/greenfield/x/storage/types"
 )
+
+type StorageTestSuite struct {
+	basesuite.BaseSuite
+	PrimarySP spTypes.StorageProvider
+}
+
+func (s *StorageTestSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
+
+	spList, err := s.Client.ListStorageProviders(s.ClientContext, false)
+	s.Require().NoError(err)
+	for _, sp := range spList {
+		if sp.Endpoint != "https://sp0.greenfield.io" {
+			s.PrimarySP = sp
+		}
+	}
+}
+
+func TestStorageTestSuite(t *testing.T) {
+	suite.Run(t, new(StorageTestSuite))
+}
 
 func (s *StorageTestSuite) Test_Executable() {
 	bucketName := storageTestUtil.GenRandomBucketName()
