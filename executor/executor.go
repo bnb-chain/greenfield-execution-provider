@@ -218,7 +218,7 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	}
 	defer cli.Close()
 
-	reader, err := cli.ImagePull(ctx, "sunny2022za/gnfdexe:latest", dockerTypes.ImagePullOptions{})
+	reader, err := cli.ImagePull(ctx, "gnfdexec/gnfdexe:latest", dockerTypes.ImagePullOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -227,7 +227,7 @@ func (ex *Executor) tryInvokeExecuteTask() {
 	io.Copy(os.Stdout, reader)
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: "sunny2022za/gnfdexe",
+		Image: "gnfdexec/gnfdexe",
 		Env:   argsEnv,
 		Tty:   false,
 	}, &container.HostConfig{
